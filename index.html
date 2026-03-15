@@ -4,8 +4,143 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat na mé stránce</title>
+    <style>
+        #feedback-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: #7203AF;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 15px;
+            cursor: pointer;
+            z-index: 9999;
+        }
+        #feedback-btn:hover {
+            background-color: #5a0290;
+        }
+        #feedback-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+        #feedback-modal.open {
+            display: flex;
+        }
+        #feedback-box {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            width: 340px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        #feedback-box h2 {
+            margin: 0;
+            font-size: 18px;
+            color: #7203AF;
+        }
+        #feedback-text {
+            width: 100%;
+            height: 100px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        #feedback-submit {
+            background-color: #7203AF;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        #feedback-submit:hover {
+            background-color: #5a0290;
+        }
+        #feedback-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            align-self: flex-end;
+            font-size: 18px;
+            color: #888;
+            padding: 0;
+            line-height: 1;
+        }
+        #feedback-success {
+            display: none;
+            color: green;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
+
+    <button id="feedback-btn" aria-label="Poskytnout zpětnou vazbu">💬 Zpětná vazba</button>
+
+    <div id="feedback-modal" role="dialog" aria-modal="true" aria-labelledby="feedback-title">
+        <div id="feedback-box">
+            <button id="feedback-close" aria-label="Zavřít">✕</button>
+            <h2 id="feedback-title">Zpětná vazba</h2>
+            <textarea id="feedback-text" placeholder="Napište svůj komentář..."></textarea>
+            <button id="feedback-submit">Odeslat</button>
+            <p id="feedback-success">Děkujeme za vaši zpětnou vazbu!</p>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var btn = document.getElementById('feedback-btn');
+            var modal = document.getElementById('feedback-modal');
+            var closeBtn = document.getElementById('feedback-close');
+            var submitBtn = document.getElementById('feedback-submit');
+            var textArea = document.getElementById('feedback-text');
+            var success = document.getElementById('feedback-success');
+
+            btn.addEventListener('click', function () {
+                modal.classList.add('open');
+                textArea.focus();
+            });
+
+            closeBtn.addEventListener('click', function () {
+                modal.classList.remove('open');
+                success.style.display = 'none';
+                textArea.value = '';
+            });
+
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) {
+                    modal.classList.remove('open');
+                    success.style.display = 'none';
+                    textArea.value = '';
+                }
+            });
+
+            submitBtn.addEventListener('click', function () {
+                if (textArea.value.trim() === '') return;
+                success.style.display = 'block';
+                textArea.value = '';
+                setTimeout(function () {
+                    modal.classList.remove('open');
+                    success.style.display = 'none';
+                }, 2000);
+            });
+        })();
+    </script>
+
  <script src="https://app.chatbuilders.cz/webchat/plugin.js?v=5"></script>
     <script>
         ktt10.setup({
@@ -16,4 +151,4 @@
     </script>
 
 </body>
-</html> 
+</html>
