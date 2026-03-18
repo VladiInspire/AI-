@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Social Post Generator</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #eff6ff;
+      --primary-mid: #dbeafe;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --bg: #f8fafc;
+      --white: #ffffff;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --radius: 12px;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+      --shadow-lg: 0 4px 24px rgba(37,99,235,.12);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--primary);
+    }
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 18px;
+    }
+    .lang-switcher {
+      display: flex;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .lang-btn {
+      padding: 6px 16px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: all .2s;
+    }
+    .lang-btn.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    /* ── Main ── */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 24px 64px;
+    }
+
+    /* ── Progress ── */
+    .progress-wrap {
+      width: 100%;
+      max-width: 640px;
+      margin-bottom: 32px;
+    }
+    .steps-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .step-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      cursor: default;
+    }
+    .step-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--border);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .3s;
+      position: relative;
+      z-index: 1;
+    }
+    .step-item.active .step-circle {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 0 0 4px var(--primary-mid);
+    }
+    .step-item.done .step-circle {
+      background: var(--success);
+      color: white;
+    }
+    .step-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-align: center;
+      font-weight: 500;
+    }
+    .step-item.active .step-label { color: var(--primary); font-weight: 600; }
+    .step-connector {
+      flex: 1;
+      height: 2px;
+      background: var(--border);
+      margin: 0 -4px;
+      margin-top: -18px;
+      transition: background .3s;
+    }
+    .step-connector.done { background: var(--success); }
+    .progress-bar {
+      height: 4px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), #7c3aed);
+      border-radius: 99px;
+      transition: width .4s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 36px;
+      width: 100%;
+      max-width: 640px;
+      box-shadow: var(--shadow);
+    }
+    .card-header { margin-bottom: 28px; }
+    .card-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .card-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Form elements ── */
+    .form-group { margin-bottom: 20px; }
+    label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 7px;
+    }
+    label span { font-weight: 400; color: var(--text-muted); margin-left: 4px; }
+    input[type="text"],
+    input[type="password"],
+    textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: var(--text);
+      background: var(--white);
+      transition: border-color .2s, box-shadow .2s;
+      font-family: inherit;
+      outline: none;
+    }
+    input:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-mid);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+
+    /* ── API Key box ── */
+    .apikey-box {
+      background: #fefce8;
+      border: 1.5px solid #fbbf24;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .apikey-box label { color: #92400e; margin-bottom: 0; }
+    .apikey-hint { font-size: 0.8rem; color: #92400e; }
+
+    /* ── Chips ── */
+    .chips-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chip {
+      padding: 7px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 99px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all .2s;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: var(--white);
+      user-select: none;
+    }
+    .chip:hover { border-color: var(--primary); color: var(--primary); }
+    .chip.selected {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: white;
+    }
+
+    /* ── Network cards ── */
+    .network-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .network-card {
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--white);
+    }
+    .network-card:hover { border-color: var(--primary); background: var(--primary-light); }
+    .network-card.selected {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      box-shadow: var(--shadow-lg);
+    }
+    .network-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .network-name { font-weight: 600; font-size: 0.9rem; }
+    .network-hint { font-size: 0.75rem; color: var(--text-muted); }
+
+    /* ── Buttons ── */
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 28px;
+      justify-content: flex-end;
+    }
+    .btn {
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; transform: none; }
+    .btn-outline {
+      background: var(--white);
+      color: var(--text);
+      border: 1.5px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1.5px solid transparent;
+    }
+    .btn-ghost:hover { background: var(--bg); color: var(--text); }
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+    .btn-success:hover { background: #059669; }
+
+    /* ── Result ── */
+    .result-area {
+      position: relative;
+      min-height: 180px;
+    }
+    .result-text {
+      background: var(--primary-light);
+      border: 1.5px solid var(--primary-mid);
+      border-radius: 10px;
+      padding: 20px;
+      font-size: 0.95rem;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 160px;
+    }
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-msg {
+      font-size: 0.9rem;
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .search-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fbbf24;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+    .copy-toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--text);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: transform .3s cubic-bezier(.4,0,.2,1);
+      pointer-events: none;
+      z-index: 100;
+    }
+    .copy-toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Validation ── */
+    .field-error {
+      font-size: 0.78rem;
+      color: #ef4444;
+      margin-top: 5px;
+    }
+    input.invalid, textarea.invalid { border-color: #ef4444; }
+
+    /* ── Steps visibility ── */
+    .step-panel { display: none; }
+    .step-panel.active { display: block; animation: fadeIn .25s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    @media (max-width: 480px) {
+      .card { padding: 24px 18px; }
+      .network-grid { grid-template-columns: 1fr; }
+      .step-label { display: none; }
+      .btn-row { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">✨</div>
+    <span id="app-title">Social Post Generator</span>
+  </div>
+  <div class="lang-switcher">
+    <button class="lang-btn active" onclick="setLang('cs')" id="btn-cs">CZ</button>
+    <button class="lang-btn" onclick="setLang('en')" id="btn-en">EN</button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main>
+
+  <!-- PROGRESS -->
+  <div class="progress-wrap">
+    <div class="steps-row">
+      <div class="step-item active" id="si-1">
+        <div class="step-circle" id="sc-1">1</div>
+        <div class="step-label" id="sl-1">Profil</div>
+      </div>
+      <div class="step-connector" id="conn-1"></div>
+      <div class="step-item" id="si-2">
+        <div class="step-circle" id="sc-2">2</div>
+        <div class="step-label" id="sl-2">Obor</div>
+      </div>
+      <div class="step-connector" id="conn-2"></div>
+      <div class="step-item" id="si-3">
+        <div class="step-circle" id="sc-3">3</div>
+        <div class="step-label" id="sl-3">Příspěvek</div>
+      </div>
+      <div class="step-connector" id="conn-3"></div>
+      <div class="step-item" id="si-4">
+        <div class="step-circle" id="sc-4">4</div>
+        <div class="step-label" id="sl-4">Výsledek</div>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:25%"></div></div>
+  </div>
+
+  <!-- CARD -->
+  <div class="card">
+
+    <!-- STEP 1: PROFILE -->
+    <div class="step-panel active" id="step-1">
+      <div class="card-header">
+        <div class="card-title" id="t1-title">Krok 1 – Váš profil</div>
+        <div class="card-subtitle" id="t1-sub">Řekněte nám o sobě, abychom mohli vytvořit příspěvek přesně na míru.</div>
+      </div>
+
+      <!-- API Key (shown if server has no key) -->
+      <div class="apikey-box" id="apikey-box" style="display:none">
+        <label for="api-key" id="lbl-apikey">🔑 Anthropic API klíč</label>
+        <input type="password" id="api-key" placeholder="sk-ant-..." />
+        <div class="apikey-hint" id="hint-apikey">Klíč se neukládá – je použit pouze pro toto sezení.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="name" id="lbl-name">Vaše jméno</label>
+        <input type="text" id="name" placeholder="Jana Nováková" />
+        <div class="field-error" id="err-name"></div>
+      </div>
+      <div class="form-group">
+        <label for="role" id="lbl-role">Čím se zabýváte <span id="hint-role">(profese / obor)</span></label>
+        <input type="text" id="role" placeholder="Koučka osobního rozvoje, autorka online kurzů" />
+        <div class="field-error" id="err-role"></div>
+      </div>
+      <div class="form-group">
+        <label for="customer" id="lbl-customer">Kdo je vaše zákaznice <span id="hint-customer">(popis ideální klientky)</span></label>
+        <input type="text" id="customer" placeholder="Ženy 30–45 let hledající životní rovnováhu" />
+        <div class="field-error" id="err-customer"></div>
+      </div>
+      <div class="form-group">
+        <label id="lbl-style">Styl komunikace <span id="hint-style">(vyberte 1 nebo více)</span></label>
+        <div class="chips-wrap" id="style-chips"></div>
+        <div class="field-error" id="err-style"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="goStep(2)" id="btn-next1">
+          <span id="t-next">Další</span> →
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 2: INDUSTRY -->
+    <div class="step-panel" id="step-2">
+      <div class="card-header">
+        <div class="card-title" id="t2-title">Krok 2 – Váš obor</div>
+        <div class="card-subtitle" id="t2-sub">Pomocí těchto informací najdeme aktuální trendy ve vašem oboru.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="keywords" id="lbl-keywords">Klíčová slova oboru / konkurence</label>
+        <textarea id="keywords" rows="3" placeholder="koučink, mindset, produktivita, work-life balance, Jana Procházková, LifeCoach.cz"></textarea>
+        <div class="field-error" id="err-keywords"></div>
+      </div>
+      <div class="form-group">
+        <label for="avoid" id="lbl-avoid">Co nechcete dělat <span id="hint-avoid">(nepovinné)</span></label>
+        <textarea id="avoid" rows="2" placeholder="nechci mluvit o politice, nechci srovnávat s konkurencí jménem, nechci sdílet soukromý život"></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goStep(1)" id="btn-back2">← <span id="t-back">Zpět</span></button>
+        <button class="btn btn-primary" onclick="goStep(3)" id="btn-next2">
+          <span id="t-next2">Další</span> →
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 3: POST -->
+    <div class="step-panel" id="step-3">
+      <div class="card-header">
+        <div class="card-title" id="t3-title">Krok 3 – Nastavení příspěvku</div>
+        <div class="card-subtitle" id="t3-sub">Vyberte síť, téma a cíl příspěvku.</div>
+      </div>
+
+      <div class="form-group">
+        <label id="lbl-network">Sociální síť</label>
+        <div class="network-grid" id="network-grid"></div>
+        <div class="field-error" id="err-network"></div>
+      </div>
+      <div class="form-group">
+        <label for="topic" id="lbl-topic">Téma příspěvku</label>
+        <textarea id="topic" rows="2" placeholder="Jak jsem překonala vyhoření a co mi v tom pomohlo"></textarea>
+        <div class="field-error" id="err-topic"></div>
+      </div>
+      <div class="form-group">
+        <label for="goal" id="lbl-goal">Cíl příspěvku</label>
+        <input type="text" id="goal" placeholder="Získat nové klientky, ukázat expertízu, zvýšit engagement" />
+        <div class="field-error" id="err-goal"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goStep(2)" id="btn-back3">← <span id="t-back3">Zpět</span></button>
+        <button class="btn btn-primary" onclick="generate()" id="btn-generate">
+          ✨ <span id="t-generate">Generovat příspěvek</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 4: RESULT -->
+    <div class="step-panel" id="step-4">
+      <div class="card-header">
+        <div class="card-title" id="t4-title">Krok 4 – Váš příspěvek</div>
+        <div class="card-subtitle" id="t4-sub">Příspěvek vygenerovaný pomocí AI s aktuálními trendy vašeho oboru.</div>
+      </div>
+
+      <div class="result-area" id="result-area">
+        <div class="loading-state" id="loading-state">
+          <div class="spinner"></div>
+          <div class="loading-msg" id="loading-msg">Hledám aktuální trendy ve vašem oboru...</div>
+        </div>
+        <div id="search-badge" class="search-badge" style="display:none">
+          🔍 <span id="t-searching">Prohledávám web pro aktuální trendy...</span>
+        </div>
+        <div class="result-text" id="result-text" style="display:none"></div>
+      </div>
+
+      <div class="btn-row" id="result-btns" style="display:none">
+        <button class="btn btn-ghost" onclick="goStep(1)" id="btn-restart">
+          ↺ <span id="t-restart">Začít znovu</span>
+        </button>
+        <button class="btn btn-outline" onclick="generate()" id="btn-retry">
+          ↻ <span id="t-retry">Zkusit znovu</span>
+        </button>
+        <button class="btn btn-success" onclick="copyResult()" id="btn-copy">
+          📋 <span id="t-copy">Kopírovat</span>
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /card -->
+</main>
+
+<div class="copy-toast" id="copy-toast" id="copy-toast">✓ Zkopírováno!</div>
+
+<script>
+// ──────────────────────────────────────────────
+//  CONFIG
+// ──────────────────────────────────────────────
+let currentLang = localStorage.getItem('lang') || 'cs';
+let currentStep = 1;
+let selectedStyles = [];
+let selectedNetwork = '';
+let serverHasKey = false;
+
+const STRINGS = {
+  cs: {
+    appTitle: 'Social Post Generator',
+    step1Title: 'Krok 1 – Váš profil',
+    step1Sub: 'Řekněte nám o sobě, abychom mohli vytvořit příspěvek přesně na míru.',
+    step2Title: 'Krok 2 – Váš obor',
+    step2Sub: 'Pomocí těchto informací najdeme aktuální trendy ve vašem oboru.',
+    step3Title: 'Krok 3 – Nastavení příspěvku',
+    step3Sub: 'Vyberte síť, téma a cíl příspěvku.',
+    step4Title: 'Krok 4 – Váš příspěvek',
+    step4Sub: 'Příspěvek vygenerovaný pomocí AI s aktuálními trendy vašeho oboru.',
+    stepLabels: ['Profil', 'Obor', 'Příspěvek', 'Výsledek'],
+    lblName: 'Vaše jméno',
+    lblRole: 'Čím se zabýváte', hintRole: '(profese / obor)',
+    lblCustomer: 'Kdo je vaše zákaznice', hintCustomer: '(popis ideální klientky)',
+    lblStyle: 'Styl komunikace', hintStyle: '(vyberte 1 nebo více)',
+    lblApikey: '🔑 Anthropic API klíč',
+    hintApikey: 'Klíč se neukládá – je použit pouze pro toto sezení.',
+    lblKeywords: 'Klíčová slova oboru / konkurence',
+    lblAvoid: 'Co nechcete dělat', hintAvoid: '(nepovinné)',
+    lblNetwork: 'Sociální síť',
+    lblTopic: 'Téma příspěvku',
+    lblGoal: 'Cíl příspěvku',
+    btnNext: 'Další', btnBack: 'Zpět', btnGenerate: 'Generovat příspěvek',
+    btnRestart: 'Začít znovu', btnRetry: 'Zkusit znovu', btnCopy: 'Kopírovat',
+    loadingMsg: 'Hledám aktuální trendy ve vašem oboru...',
+    searchingMsg: 'Prohledávám web pro aktuální trendy...',
+    copiedMsg: '✓ Zkopírováno!',
+    styles: ['Přátelský', 'Profesionální', 'Inspirativní', 'Přímý', 'Humorný', 'Vzdělávací'],
+    styleValues: ['přátelský', 'profesionální', 'inspirativní', 'přímý', 'humorný', 'vzdělávací'],
+    networks: [
+      { id:'LinkedIn', label:'LinkedIn', icon:'💼', hint:'Profesionální síť' },
+      { id:'Facebook', label:'Facebook', icon:'📘', hint:'Komunita & sdílení' },
+      { id:'Instagram', label:'Instagram', icon:'📸', hint:'Vizuální obsah' },
+      { id:'Newsletter', label:'Newsletter', icon:'📧', hint:'Email marketing' },
+    ],
+    errName: 'Zadejte prosím jméno.',
+    errRole: 'Zadejte prosím čím se zabýváte.',
+    errCustomer: 'Popište prosím vaši zákaznici.',
+    errStyle: 'Vyberte prosím alespoň jeden styl.',
+    errKeywords: 'Zadejte prosím klíčová slova.',
+    errNetwork: 'Vyberte prosím sociální síť.',
+    errTopic: 'Zadejte prosím téma příspěvku.',
+    errGoal: 'Zadejte prosím cíl příspěvku.',
+    apikeyPlaceholder: 'sk-ant-...',
+    namePlaceholder: 'Jana Nováková',
+    rolePlaceholder: 'Koučka osobního rozvoje, autorka online kurzů',
+    customerPlaceholder: 'Ženy 30–45 let hledající životní rovnováhu',
+    keywordsPlaceholder: 'koučink, mindset, produktivita, work-life balance',
+    avoidPlaceholder: 'nechci mluvit o politice, nechci srovnávat s konkurencí jménem',
+    topicPlaceholder: 'Jak jsem překonala vyhoření a co mi v tom pomohlo',
+    goalPlaceholder: 'Získat nové klientky, ukázat expertízu, zvýšit engagement',
+  },
+  en: {
+    appTitle: 'Social Post Generator',
+    step1Title: 'Step 1 – Your profile',
+    step1Sub: 'Tell us about yourself so we can craft a perfectly tailored post.',
+    step2Title: 'Step 2 – Your industry',
+    step2Sub: 'We use this to find current trends in your field.',
+    step3Title: 'Step 3 – Post settings',
+    step3Sub: 'Choose your network, topic, and goal.',
+    step4Title: 'Step 4 – Your post',
+    step4Sub: 'AI-generated post with current trends from your industry.',
+    stepLabels: ['Profile', 'Industry', 'Post', 'Result'],
+    lblName: 'Your name',
+    lblRole: 'What you do', hintRole: '(profession / field)',
+    lblCustomer: 'Who is your ideal client', hintCustomer: '(describe your target customer)',
+    lblStyle: 'Communication style', hintStyle: '(select one or more)',
+    lblApikey: '🔑 Anthropic API Key',
+    hintApikey: 'Key is never saved – used only for this session.',
+    lblKeywords: 'Industry keywords / competition',
+    lblAvoid: 'What to avoid', hintAvoid: '(optional)',
+    lblNetwork: 'Social network',
+    lblTopic: 'Post topic',
+    lblGoal: 'Post goal',
+    btnNext: 'Next', btnBack: 'Back', btnGenerate: 'Generate post',
+    btnRestart: 'Start over', btnRetry: 'Try again', btnCopy: 'Copy',
+    loadingMsg: 'Searching for current trends in your industry...',
+    searchingMsg: 'Browsing the web for current trends...',
+    copiedMsg: '✓ Copied!',
+    styles: ['Friendly', 'Professional', 'Inspirational', 'Direct', 'Humorous', 'Educational'],
+    styleValues: ['friendly', 'professional', 'inspirational', 'direct', 'humorous', 'educational'],
+    networks: [
+      { id:'LinkedIn', label:'LinkedIn', icon:'💼', hint:'Professional network' },
+      { id:'Facebook', label:'Facebook', icon:'📘', hint:'Community & sharing' },
+      { id:'Instagram', label:'Instagram', icon:'📸', hint:'Visual content' },
+      { id:'Newsletter', label:'Newsletter', icon:'📧', hint:'Email marketing' },
+    ],
+    errName: 'Please enter your name.',
+    errRole: 'Please describe what you do.',
+    errCustomer: 'Please describe your target customer.',
+    errStyle: 'Please select at least one style.',
+    errKeywords: 'Please enter keywords.',
+    errNetwork: 'Please select a social network.',
+    errTopic: 'Please enter a post topic.',
+    errGoal: 'Please enter a post goal.',
+    apikeyPlaceholder: 'sk-ant-...',
+    namePlaceholder: 'Jane Smith',
+    rolePlaceholder: 'Life coach, online course creator',
+    customerPlaceholder: 'Women 30–45 looking for work-life balance',
+    keywordsPlaceholder: 'life coaching, mindset, productivity, burnout',
+    avoidPlaceholder: 'no politics, no direct competitor comparisons',
+    topicPlaceholder: 'How I overcame burnout and what helped me',
+    goalPlaceholder: 'Get new clients, showcase expertise, boost engagement',
+  }
+};
+
+// ──────────────────────────────────────────────
+//  LANGUAGE
+// ──────────────────────────────────────────────
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('lang', lang);
+  document.getElementById('btn-cs').classList.toggle('active', lang === 'cs');
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  renderStrings();
+  renderChips();
+  renderNetworks();
+}
+
+function renderStrings() {
+  const s = STRINGS[currentLang];
+  document.getElementById('app-title').textContent = s.appTitle;
+  document.getElementById('t1-title').textContent = s.step1Title;
+  document.getElementById('t1-sub').textContent = s.step1Sub;
+  document.getElementById('t2-title').textContent = s.step2Title;
+  document.getElementById('t2-sub').textContent = s.step2Sub;
+  document.getElementById('t3-title').textContent = s.step3Title;
+  document.getElementById('t3-sub').textContent = s.step3Sub;
+  document.getElementById('t4-title').textContent = s.step4Title;
+  document.getElementById('t4-sub').textContent = s.step4Sub;
+
+  s.stepLabels.forEach((l, i) => {
+    document.getElementById(`sl-${i+1}`).textContent = l;
+  });
+
+  document.getElementById('lbl-name').textContent = s.lblName;
+  document.getElementById('lbl-role').innerHTML = `${s.lblRole} <span id="hint-role">${s.hintRole}</span>`;
+  document.getElementById('lbl-customer').innerHTML = `${s.lblCustomer} <span id="hint-customer">${s.hintCustomer}</span>`;
+  document.getElementById('lbl-style').innerHTML = `${s.lblStyle} <span id="hint-style">${s.hintStyle}</span>`;
+  document.getElementById('lbl-keywords').textContent = s.lblKeywords;
+  document.getElementById('lbl-avoid').innerHTML = `${s.lblAvoid} <span id="hint-avoid">${s.hintAvoid}</span>`;
+  document.getElementById('lbl-network').textContent = s.lblNetwork;
+  document.getElementById('lbl-topic').textContent = s.lblTopic;
+  document.getElementById('lbl-goal').textContent = s.lblGoal;
+
+  if (!serverHasKey) {
+    document.getElementById('lbl-apikey').textContent = s.lblApikey;
+    document.getElementById('hint-apikey').textContent = s.hintApikey;
+    document.getElementById('api-key').placeholder = s.apikeyPlaceholder;
+  }
+
+  document.getElementById('name').placeholder = s.namePlaceholder;
+  document.getElementById('role').placeholder = s.rolePlaceholder;
+  document.getElementById('customer').placeholder = s.customerPlaceholder;
+  document.getElementById('keywords').placeholder = s.keywordsPlaceholder;
+  document.getElementById('avoid').placeholder = s.avoidPlaceholder;
+  document.getElementById('topic').placeholder = s.topicPlaceholder;
+  document.getElementById('goal').placeholder = s.goalPlaceholder;
+
+  document.getElementById('t-next').textContent = s.btnNext;
+  document.getElementById('t-next2').textContent = s.btnNext;
+  document.getElementById('t-back').textContent = s.btnBack;
+  document.getElementById('t-back3').textContent = s.btnBack;
+  document.getElementById('t-generate').textContent = s.btnGenerate;
+  document.getElementById('t-restart').textContent = s.btnRestart;
+  document.getElementById('t-retry').textContent = s.btnRetry;
+  document.getElementById('t-copy').textContent = s.btnCopy;
+  document.getElementById('loading-msg').textContent = s.loadingMsg;
+  document.getElementById('t-searching').textContent = s.searchingMsg;
+  document.getElementById('copy-toast').textContent = s.copiedMsg;
+}
+
+// ──────────────────────────────────────────────
+//  CHIPS
+// ──────────────────────────────────────────────
+function renderChips() {
+  const s = STRINGS[currentLang];
+  const wrap = document.getElementById('style-chips');
+  wrap.innerHTML = '';
+  s.styles.forEach((label, i) => {
+    const val = s.styleValues[i];
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (selectedStyles.includes(val) ? ' selected' : '');
+    chip.textContent = label;
+    chip.onclick = () => {
+      if (selectedStyles.includes(val)) {
+        selectedStyles = selectedStyles.filter(x => x !== val);
+      } else {
+        selectedStyles.push(val);
+      }
+      renderChips();
+    };
+    wrap.appendChild(chip);
+  });
+}
+
+// ──────────────────────────────────────────────
+//  NETWORKS
+// ──────────────────────────────────────────────
+function renderNetworks() {
+  const s = STRINGS[currentLang];
+  const grid = document.getElementById('network-grid');
+  grid.innerHTML = '';
+  s.networks.forEach(n => {
+    const card = document.createElement('div');
+    card.className = 'network-card' + (selectedNetwork === n.id ? ' selected' : '');
+    card.innerHTML = `
+      <div class="network-icon">${n.icon}</div>
+      <div>
+        <div class="network-name">${n.label}</div>
+        <div class="network-hint">${n.hint}</div>
+      </div>
+    `;
+    card.onclick = () => {
+      selectedNetwork = n.id;
+      renderNetworks();
+    };
+    grid.appendChild(card);
+  });
+}
+
+// ──────────────────────────────────────────────
+//  STEP NAVIGATION
+// ──────────────────────────────────────────────
+function goStep(n) {
+  if (n > currentStep && !validateStep(currentStep)) return;
+  currentStep = n;
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`step-${n}`).classList.add('active');
+  updateProgress(n);
+}
+
+function updateProgress(n) {
+  const pct = (n / 4) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+
+  for (let i = 1; i <= 4; i++) {
+    const si = document.getElementById(`si-${i}`);
+    const sc = document.getElementById(`sc-${i}`);
+    si.classList.remove('active', 'done');
+    if (i < n) {
+      si.classList.add('done');
+      sc.innerHTML = '✓';
+    } else if (i === n) {
+      si.classList.add('active');
+      sc.textContent = i;
+    } else {
+      sc.textContent = i;
+    }
+  }
+  for (let i = 1; i <= 3; i++) {
+    const c = document.getElementById(`conn-${i}`);
+    c.classList.toggle('done', i < n);
+  }
+}
+
+// ──────────────────────────────────────────────
+//  VALIDATION
+// ──────────────────────────────────────────────
+function clearErrors() {
+  document.querySelectorAll('.field-error').forEach(e => e.textContent = '');
+  document.querySelectorAll('.invalid').forEach(e => e.classList.remove('invalid'));
+}
+
+function showError(fieldId, errId, msg) {
+  const el = document.getElementById(fieldId);
+  const err = document.getElementById(errId);
+  if (el) el.classList.add('invalid');
+  if (err) err.textContent = msg;
+}
+
+function validateStep(step) {
+  clearErrors();
+  const s = STRINGS[currentLang];
+  let ok = true;
+
+  if (step === 1) {
+    if (!document.getElementById('name').value.trim()) { showError('name','err-name',s.errName); ok=false; }
+    if (!document.getElementById('role').value.trim()) { showError('role','err-role',s.errRole); ok=false; }
+    if (!document.getElementById('customer').value.trim()) { showError('customer','err-customer',s.errCustomer); ok=false; }
+    if (selectedStyles.length === 0) { document.getElementById('err-style').textContent = s.errStyle; ok=false; }
+    if (!serverHasKey && !document.getElementById('api-key').value.trim()) {
+      showError('api-key','err-name', s.lblApikey + ' – ' + s.errName.replace('Zadejte','Zadejte prosím'));
+      ok=false;
+    }
+  }
+  if (step === 2) {
+    if (!document.getElementById('keywords').value.trim()) { showError('keywords','err-keywords',s.errKeywords); ok=false; }
+  }
+  if (step === 3) {
+    if (!selectedNetwork) { document.getElementById('err-network').textContent = s.errNetwork; ok=false; }
+    if (!document.getElementById('topic').value.trim()) { showError('topic','err-topic',s.errTopic); ok=false; }
+    if (!document.getElementById('goal').value.trim()) { showError('goal','err-goal',s.errGoal); ok=false; }
+  }
+  return ok;
+}
+
+// ──────────────────────────────────────────────
+//  GENERATE
+// ──────────────────────────────────────────────
+async function generate() {
+  if (!validateStep(3)) return;
+
+  goStep(4);
+
+  // Reset result area
+  document.getElementById('loading-state').style.display = 'flex';
+  document.getElementById('result-text').style.display = 'none';
+  document.getElementById('result-text').textContent = '';
+  document.getElementById('result-btns').style.display = 'none';
+  document.getElementById('search-badge').style.display = 'none';
+
+  const s = STRINGS[currentLang];
+  document.getElementById('loading-msg').textContent = s.loadingMsg;
+
+  const data = {
+    name: document.getElementById('name').value.trim(),
+    role: document.getElementById('role').value.trim(),
+    customer: document.getElementById('customer').value.trim(),
+    styles: selectedStyles,
+    keywords: document.getElementById('keywords').value.trim(),
+    avoid: document.getElementById('avoid').value.trim(),
+    network: selectedNetwork,
+    topic: document.getElementById('topic').value.trim(),
+    goal: document.getElementById('goal').value.trim(),
+  };
+
+  const apiKey = serverHasKey ? undefined : document.getElementById('api-key').value.trim();
+
+  try {
+    const resp = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data, language: currentLang, apiKey })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.error || 'Server error');
+    }
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let resultStarted = false;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const payload = line.slice(6).trim();
+        if (payload === '[DONE]') {
+          document.getElementById('loading-state').style.display = 'none';
+          document.getElementById('search-badge').style.display = 'none';
+          document.getElementById('result-btns').style.display = 'flex';
+          continue;
+        }
+
+        try {
+          const obj = JSON.parse(payload);
+          if (obj.error) {
+            document.getElementById('loading-state').style.display = 'none';
+            const rt = document.getElementById('result-text');
+            rt.style.display = 'block';
+            rt.style.background = '#fef2f2';
+            rt.style.borderColor = '#fca5a5';
+            rt.textContent = '❌ ' + obj.error;
+            document.getElementById('result-btns').style.display = 'flex';
+            break;
+          }
+          if (obj.searching) {
+            document.getElementById('search-badge').style.display = 'inline-flex';
+          }
+          if (obj.text) {
+            document.getElementById('loading-state').style.display = 'none';
+            document.getElementById('search-badge').style.display = 'none';
+            const rt = document.getElementById('result-text');
+            rt.style.display = 'block';
+            rt.textContent += obj.text;
+            resultStarted = true;
+          }
+        } catch {}
+      }
+    }
+
+    if (!resultStarted) {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('result-btns').style.display = 'flex';
+    }
+
+  } catch (err) {
+    document.getElementById('loading-state').style.display = 'none';
+    const rt = document.getElementById('result-text');
+    rt.style.display = 'block';
+    rt.style.background = '#fef2f2';
+    rt.style.borderColor = '#fca5a5';
+    rt.textContent = '❌ ' + err.message;
+    document.getElementById('result-btns').style.display = 'flex';
+  }
+}
+
+// ──────────────────────────────────────────────
+//  COPY
+// ──────────────────────────────────────────────
+function copyResult() {
+  const text = document.getElementById('result-text').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.getElementById('copy-toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2200);
+  });
+}
+
+// ──────────────────────────────────────────────
+//  INIT
+// ──────────────────────────────────────────────
+async function init() {
+  try {
+    const res = await fetch('/api/status');
+    const data = await res.json();
+    serverHasKey = data.hasApiKey;
+    document.getElementById('apikey-box').style.display = serverHasKey ? 'none' : 'flex';
+  } catch {
+    serverHasKey = false;
+    document.getElementById('apikey-box').style.display = 'flex';
+  }
+
+  renderStrings();
+  renderChips();
+  renderNetworks();
+}
+
+init();
+</script>
+</body>
+</html>
