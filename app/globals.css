@@ -10,7 +10,7 @@
 }
 
 :root {
-  --font: var(--font-montserrat), 'Montserrat', sans-serif;
+  --font: 'Montserrat', sans-serif;
 
   /* Palette */
   --bg:           #f5f0ff;
